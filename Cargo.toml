@@ -4,3 +4,13 @@ members = [
     "canisters/pair"
 ]
 resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+
+[workspace.dependencies]
+candid = "0.10.35"
+ic-cdk = "0.13.1"
+ic-cdk-timers = "0.7.0"
+serde = { version = "1.0", features = ["derive"] }
