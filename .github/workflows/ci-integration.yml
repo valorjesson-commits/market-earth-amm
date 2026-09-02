@@ -43,18 +43,11 @@ jobs:
           dfx --version
 
       - name: Run Deployment & Integration Pipeline
-        env:
-          GOV_PRINCIPAL: ${{ secrets.GOV_PRINCIPAL }}
         run: |
           export PATH="$HOME/.local/share/dfx/bin:$PATH"
           chmod +x deploy_local.sh scripts/integration_liquidity_test.sh
           
-          # Fallback to a test principal if secret is empty in workflow
-          if [ -z "${GOV_PRINCIPAL:-}" ]; then
-            GOV_PRINCIPAL="aaaaa-aa"
-          fi
-          
-          GOV_PRINCIPAL="$GOV_PRINCIPAL" ./deploy_local.sh
+          GOV_PRINCIPAL="$(dfx identity get-principal)" ./deploy_local.sh
           ./scripts/integration_liquidity_test.sh
 
       - name: Cleanup replica on failure
