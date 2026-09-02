@@ -1,0 +1,25 @@
+name: Canister Build & Deploy
+on:
+  push:
+    branches: [ "canister-implementation" ]
+  pull_request:
+    branches: [ "canister-implementation" ]
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          target: wasm32-unknown-unknown
+          override: true
+      - name: Build AMM Factory
+        run: cargo build --manifest-path canisters/amm_factory/Cargo.toml --target wasm32-unknown-unknown --release
+      - name: Build Pair Canister
+        run: cargo build --manifest-path canisters/pair/Cargo.toml --target wasm32-unknown-unknown --release
+      - name: Verify WASM Output
+        run: |
+          ls -lh target/wasm32-unknown-unknown/release/amm_factory.wasm
+          ls -lh target/wasm32-unknown-unknown/release/pair.wasm
