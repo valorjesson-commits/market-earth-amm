@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "canisters/amm_factory",
+    "canisters/pair"
+]
+resolver = "2"
