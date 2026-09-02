@@ -23,9 +23,18 @@ jobs:
 
       - name: Install DFX
         run: |
-          # Use official install script and append bin path to GITHUB_PATH
-          echo "Installing DFX..."
-          sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+          # Download and extract the official dfx binary directly
+          DFX_VERSION=0.15.2
+          echo "Installing DFX version $DFX_VERSION..."
+          SF_URL="https://github.com/dfinity/sdk/releases/download/${DFX_VERSION}/dfx-${DFX_VERSION}-x86_64-linux.tar.gz"
+          
+          curl -L "$SF_URL" -o dfx.tar.gz
+          tar -xzf dfx.tar.gz
+          
+          mkdir -p $HOME/.local/share/dfx/bin
+          mv dfx $HOME/.local/share/dfx/bin/
+          chmod +x $HOME/.local/share/dfx/bin/dfx
+          
           echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
 
       - name: Verify DFX Installation
