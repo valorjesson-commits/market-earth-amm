@@ -4,21 +4,6 @@
       "type": "rust",
       "package": "amm_factory",
       "candid": "canisters/amm_factory/amm_factory.did"
-    },
-    "token_a": {
-      "type": "custom",
-      "wasm": "canisters/token_a.wasm",
-      "candid": "canisters/token.did"
-    },
-    "token_b": {
-      "type": "custom",
-      "wasm": "canisters/token_b.wasm",
-      "candid": "canisters/token.did"
-    }
-  },
-  "defaults": {
-    "build": {
-      "packtool": ""
     }
   },
   "version": 1
