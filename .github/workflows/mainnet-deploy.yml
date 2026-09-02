@@ -1,0 +1,209 @@
+name: 🚀 Market Earth AMM Mainnet Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      gov_principal:
+        description: 'Governance Principal (multisig recommended)'
+        required: true
+        type: string
+      network:
+        description: 'Network to deploy to'
+        required: true
+        type: choice
+        options:
+          - ic
+          - staging
+        default: ic
+
+jobs:
+  mainnet-deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      # PHASE 1: Environment Setup (10%)
+      - name: "[10%] Checkout repository"
+        uses: actions/checkout@v3
+      
+      - name: "[15%] Setup Rust toolchain"
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          target: wasm32-unknown-unknown
+          override: true
+      
+      - name: "[20%] Install dfx CLI"
+        run: |
+          DFX_VERSION=0.15.2 sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+          echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+      
+      # PHASE 2: Build Canisters (30%)
+      - name: "[25%] Build AMM Factory canister"
+        run: |
+          echo "🔨 Building AMM Factory WASM..."
+          cargo build --manifest-path canisters/amm_factory/Cargo.toml --target wasm32-unknown-unknown --release
+          ls -lh target/wasm32-unknown-unknown/release/amm_factory.wasm
+      
+      - name: "[30%] Build Pair canister"
+        run: |
+          echo "🔨 Building Pair WASM..."
+          cargo build --manifest-path canisters/pair/Cargo.toml --target wasm32-unknown-unknown --release
+          ls -lh target/wasm32-unknown-unknown/release/pair.wasm
+      
+      # PHASE 3: Verification (40%)
+      - name: "[35%] Verify WASM binaries"
+        run: |
+          echo "✅ Verifying WASM outputs..."
+          [ -f target/wasm32-unknown-unknown/release/amm_factory.wasm ] || exit 1
+          [ -f target/wasm32-unknown-unknown/release/pair.wasm ] || exit 1
+          echo "✅ All WASM binaries verified"
+      
+      - name: "[40%] Calculate checksums"
+        run: |
+          echo "🔐 Generating checksums..."
+          sha256sum target/wasm32-unknown-unknown/release/amm_factory.wasm > checksums.txt
+          sha256sum target/wasm32-unknown-unknown/release/pair.wasm >> checksums.txt
+          cat checksums.txt
+      
+      # PHASE 4: Pre-deployment checks (50%)
+      - name: "[45%] Validate governance principal"
+        run: |
+          GOV_PRINCIPAL="${{ github.event.inputs.gov_principal }}"
+          echo "🔑 Governance Principal: ${GOV_PRINCIPAL}"
+          if [[ ! "$GOV_PRINCIPAL" =~ ^[a-z0-9-]+-cai$ ]]; then
+            echo "⚠️ Warning: Principal format may be invalid"
+          fi
+          echo "GOV_PRINCIPAL=$GOV_PRINCIPAL" >> $GITHUB_ENV
+      
+      - name: "[50%] dfx configuration check"
+        run: |
+          echo "📋 Checking dfx version..."
+          dfx --version
+          echo "📋 Network: ${{ github.event.inputs.network }}"
+      
+      # PHASE 5: Deployment (70%)
+      - name: "[55%] Configure dfx identity"
+        run: |
+          echo "🔐 Setting up dfx identity..."
+          dfx identity use default || dfx identity create default
+          echo "✅ Identity configured"
+      
+      - name: "[60%] Deploy AMM Factory canister"
+        env:
+          GOV_PRINCIPAL: ${{ env.GOV_PRINCIPAL }}
+          NETWORK: ${{ github.event.inputs.network }}
+        run: |
+          echo "🚀 Deploying AMM Factory to $NETWORK..."
+          dfx deploy --network $NETWORK amm_factory --no-wallet --argument "(record { 
+            governance_principal = principal \"$GOV_PRINCIPAL\"; 
+            paused = false; 
+            whitelist = vec {} 
+          })"
+          FACTORY_ID=$(dfx canister --network $NETWORK id amm_factory)
+          echo "FACTORY_CANISTER_ID=$FACTORY_ID" >> $GITHUB_ENV
+          echo "✅ AMM Factory deployed: $FACTORY_ID"
+      
+      - name: "[70%] Verify factory deployment"
+        env:
+          NETWORK: ${{ github.event.inputs.network }}
+        run: |
+          echo "🔍 Verifying deployment..."
+          sleep 5
+          dfx canister --network $NETWORK status ${{ env.FACTORY_CANISTER_ID }}
+          echo "✅ Factory status verified"
+      
+      # PHASE 6: Post-deployment validation (85%)
+      - name: "[75%] Get factory configuration"
+        env:
+          NETWORK: ${{ github.event.inputs.network }}
+        run: |
+          echo "📊 Factory Configuration:"
+          dfx canister --network $NETWORK call ${{ env.FACTORY_CANISTER_ID }} get_config
+      
+      - name: "[80%] List initial pairs"
+        env:
+          NETWORK: ${{ github.event.inputs.network }}
+        run: |
+          echo "📋 Listing pairs (should be empty initially):"
+          dfx canister --network $NETWORK call ${{ env.FACTORY_CANISTER_ID }} list_pairs
+      
+      - name: "[85%] Generate deployment report"
+        env:
+          NETWORK: ${{ github.event.inputs.network }}
+        run: |
+          cat > DEPLOYMENT_REPORT.md << EOF
+          # Market Earth AMM Mainnet Deployment Report
+          
+          **Deployment Time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          **Network**: ${{ github.event.inputs.network }}
+          **Deployer**: ${{ github.actor }}
+          
+          ## Deployed Canisters
+          - **AMM Factory**: ${{ env.FACTORY_CANISTER_ID }}
+          - **Governance Principal**: ${{ env.GOV_PRINCIPAL }}
+          
+          ## Build Artifacts
+          \`\`\`
+          $(cat checksums.txt)
+          \`\`\`
+          
+          ## Next Steps
+          1. Deploy token canisters (if not already deployed)
+          2. Create first pair via factory
+          3. Add liquidity to pair
+          4. Execute test swaps
+          
+          ## Verification Commands
+          \`\`\`bash
+          dfx canister --network ${{ github.event.inputs.network }} status ${{ env.FACTORY_CANISTER_ID }}
+          dfx canister --network ${{ github.event.inputs.network }} call ${{ env.FACTORY_CANISTER_ID }} get_config
+          dfx canister --network ${{ github.event.inputs.network }} call ${{ env.FACTORY_CANISTER_ID }} list_pairs
+          \`\`\`
+          EOF
+          cat DEPLOYMENT_REPORT.md
+      
+      # PHASE 7: Finalization (95%)
+      - name: "[90%] Upload deployment artifacts"
+        uses: actions/upload-artifact@v3
+        with:
+          name: deployment-artifacts
+          path: |
+            checksums.txt
+            DEPLOYMENT_REPORT.md
+      
+      - name: "[95%] Create deployment summary"
+        run: |
+          echo "## 🎉 Mainnet Deployment Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Factory Canister ID**: ${{ env.FACTORY_CANISTER_ID }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Network**: ${{ github.event.inputs.network }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Governance Principal**: ${{ env.GOV_PRINCIPAL }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All deployment phases completed successfully!" >> $GITHUB_STEP_SUMMARY
+      
+      - name: "[100%] Deployment finished"
+        run: |
+          echo "🎊 DEPLOYMENT COMPLETE!"
+          echo "═══════════════════════════════════════════════════════"
+          echo "✅ Phase 1: Environment Setup - COMPLETE"
+          echo "✅ Phase 2: Build Canisters - COMPLETE"
+          echo "✅ Phase 3: Verification - COMPLETE"
+          echo "✅ Phase 4: Pre-deployment checks - COMPLETE"
+          echo "✅ Phase 5: Deployment - COMPLETE"
+          echo "✅ Phase 6: Post-deployment validation - COMPLETE"
+          echo "✅ Phase 7: Finalization - COMPLETE"
+          echo "═══════════════════════════════════════════════════════"
+          echo ""
+          echo "Factory Canister: ${{ env.FACTORY_CANISTER_ID }}"
+          echo ""
+
+  on-failure:
+    runs-on: ubuntu-latest
+    needs: mainnet-deploy
+    if: failure()
+    steps:
+      - name: Deployment failed notification
+        run: |
+          echo "❌ Deployment failed. Check workflow logs for details."
+          exit 1
