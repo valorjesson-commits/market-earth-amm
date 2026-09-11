@@ -1,0 +1,10 @@
+{
+  "canisters": {
+    "amm_factory": {
+      "type": "rust",
+      "package": "amm_factory",
+      "candid": "canisters/amm_factory/amm_factory.did"
+    }
+  },
+  "version": 1
+}

@@ -1,26 +1,57 @@
-name: CI Integration & Liquidity Pipeline
+name: Market Earth AMM Mainnet Deployment
+
 on:
   push:
     branches: [ "main", "amm-deploy-setup" ]
   pull_request:
     branches: [ "main" ]
+
 jobs:
-  integration-test:
+  mainnet-deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           target: wasm32-unknown-unknown
           override: true
-      - run: DFX_VERSION=0.15.2 sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)" && echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
-      - env:
-          GOV_PRINCIPAL: ${{ secrets.GOV_PRINCIPAL }}
+
+      - name: Install DFX
         run: |
-          chmod +x deploy_local.sh
-          GOV_PRINCIPAL="${GOV_PRINCIPAL:-$(dfx identity get-principal)}" ./deploy_local.sh
-      - run: chmod +x scripts/integration_liquidity_test.sh && ./scripts/integration_liquidity_test.sh
-      - if: always()
-        run: dfx stop || true
+          # Download and extract the official dfx binary directly
+          DFX_VERSION=0.15.2
+          echo "Installing DFX version $DFX_VERSION..."
+          SF_URL="https://github.com/dfinity/sdk/releases/download/${DFX_VERSION}/dfx-${DFX_VERSION}-x86_64-linux.tar.gz"
+          
+          curl -L "$SF_URL" -o dfx.tar.gz
+          tar -xzf dfx.tar.gz
+          
+          mkdir -p $HOME/.local/share/dfx/bin
+          mv dfx $HOME/.local/share/dfx/bin/
+          chmod +x $HOME/.local/share/dfx/bin/dfx
+          
+          echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+
+      - name: Verify DFX Installation
+        run: |
+          export PATH="$HOME/.local/share/dfx/bin:$PATH"
+          dfx --version
+
+      - name: Run Deployment & Integration Pipeline
+        run: |
+          export PATH="$HOME/.local/share/dfx/bin:$PATH"
+          chmod +x deploy_local.sh scripts/integration_liquidity_test.sh
+          
+          GOV_PRINCIPAL="$(dfx identity get-principal)" ./deploy_local.sh
+          ./scripts/integration_liquidity_test.sh
+
+      - name: Cleanup replica on failure
+        if: failure()
+        run: |
+          export PATH="$HOME/.local/share/dfx/bin:$PATH"
+          dfx stop || true
