@@ -1,9 +1,11 @@
 [package]
 name = "amm_factory"
+autobins = false
 version.workspace = true
 edition.workspace = true
 
 [lib]
+path = "src/main.rs"
 crate-type = ["cdylib"]
 
 [dependencies]

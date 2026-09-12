@@ -2,7 +2,7 @@ use candid::{CandidType, Deserialize, Principal};
 use ic_cdk::{query, update};
 use std::cell::RefCell;
 
-#[derive(CandidType, Deserialize, Clone, Default)]
+#[derive(CandidType, Deserialize, Clone)]
 pub struct PairState {
     pub token_a: Principal,
     pub token_b: Principal,
@@ -10,6 +10,19 @@ pub struct PairState {
     pub reserve_b: u128,
     pub total_supply: u128,
     pub balances: std::collections::HashMap<Principal, u128>,
+}
+
+impl Default for PairState {
+    fn default() -> Self {
+        Self {
+            token_a: Principal::anonymous(),
+            token_b: Principal::anonymous(),
+            reserve_a: 0,
+            reserve_b: 0,
+            total_supply: 0,
+            balances: std::collections::HashMap::new(),
+        }
+    }
 }
 
 thread_local! {
@@ -143,3 +156,20 @@ fn total_supply() -> u128 {
 }
 
 ic_cdk::export_candid!();
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn pair_state_default_is_empty() {
+        let state = PairState::default();
+
+        assert_eq!(state.token_a, Principal::anonymous());
+        assert_eq!(state.token_b, Principal::anonymous());
+        assert_eq!(state.reserve_a, 0);
+        assert_eq!(state.reserve_b, 0);
+        assert_eq!(state.total_supply, 0);
+        assert!(state.balances.is_empty());
+    }
+}

@@ -1,5 +1,4 @@
 use candid::{CandidType, Deserialize, Principal};
-use ic_cdk::storage;
 use ic_cdk::{query, update};
 use std::collections::HashMap;
 
@@ -20,6 +19,16 @@ thread_local! {
     );
     static PAIRS: std::cell::RefCell<HashMap<(Principal, Principal), Principal>> = std::cell::RefCell::new(HashMap::new());
     static PAIR_LIST: std::cell::RefCell<Vec<(Principal, Principal, Principal)>> = std::cell::RefCell::new(vec![]);
+}
+
+fn generate_pair_id(token_a: Principal, token_b: Principal) -> Principal {
+    let (t_a, t_b) = if token_a < token_b {
+        (token_a, token_b)
+    } else {
+        (token_b, token_a)
+    };
+
+    Principal::self_authenticating(format!("pair-{}-{}", t_a, t_b).as_bytes())
 }
 
 #[ic_cdk::init]
@@ -44,7 +53,7 @@ fn create_pair(token_a: Principal, token_b: Principal) -> Result<Principal, Stri
     };
 
     PAIRS.with(|pairs| {
-        let mut p = pairs.borrow_mut();
+        let p = pairs.borrow_mut();
         if p.contains_key(&(t_a, t_b)) {
             return Err("Pair already exists".to_string());
         }
@@ -52,9 +61,7 @@ fn create_pair(token_a: Principal, token_b: Principal) -> Result<Principal, Stri
     })?;
 
     // Generate deterministic pair canister ID (simplified)
-    let pair_id = Principal::from_slice(&ic_cdk::api::crypto::sha256(
-        format!("pair-{}-{}", t_a, t_b).as_bytes(),
-    )[0..29]);
+    let pair_id = generate_pair_id(t_a, t_b);
 
     PAIRS.with(|pairs| {
         pairs.borrow_mut().insert((t_a, t_b), pair_id);
@@ -102,3 +109,16 @@ fn set_paused(paused: bool) -> Result<(), String> {
 }
 
 ic_cdk::export_candid!();
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn generate_pair_id_is_order_independent() {
+        let token_a = Principal::from_text("2vxsx-fae").unwrap();
+        let token_b = Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap();
+
+        assert_eq!(generate_pair_id(token_a, token_b), generate_pair_id(token_b, token_a));
+    }
+}
