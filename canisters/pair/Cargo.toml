@@ -1,9 +1,11 @@
 [package]
 name = "pair"
+autobins = false
 version.workspace = true
 edition.workspace = true
 
 [lib]
+path = "src/main.rs"
 crate-type = ["cdylib"]
 
 [dependencies]

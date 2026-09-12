@@ -1,15 +1,18 @@
 [package]
 name = "amm_factory"
+autobins = false
 version.workspace = true
 edition.workspace = true
 
 [lib]
+path = "src/main.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
 candid.workspace = true
 ic-cdk.workspace = true
 serde.workspace = true
+sha2 = "0.10.9"
 
 [profile.release]
 opt-level = "z"
