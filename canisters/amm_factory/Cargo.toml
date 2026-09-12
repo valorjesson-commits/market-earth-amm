@@ -1,19 +1,16 @@
 [package]
 name = "amm_factory"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-ic-cdk = "0.13"
-ic-cdk-macros = "0.13"
-ics = "0.1"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-candid = "0.10"
+version.workspace = true
+edition.workspace = true
 
 [lib]
 crate-type = ["cdylib"]
 
-[[bin]]
-name = "amm_factory"
-path = "src/main.rs"
+[dependencies]
+candid.workspace = true
+ic-cdk.workspace = true
+serde.workspace = true
+
+[profile.release]
+opt-level = "z"
+lto = true

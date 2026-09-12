@@ -1,29 +1,15 @@
 [package]
 name = "pair"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-ic-cdk = "0.13"
-ic-cdk-macros = "0.13"
-ics = "0.1"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-candid = "0.10"
+version.workspace = true
+edition.workspace = true
 
 [lib]
 crate-type = ["cdylib"]
 
-[[bin]]
-name = "pair"
-path = "src/main.rs"
-[lib]
-crate-type = ["cdylib"]
-
 [dependencies]
-ic-cdk = "0.7"
-candid = "0.9"
-serde = { version = "1.0", features = ["derive"] }
+candid.workspace = true
+ic-cdk.workspace = true
+serde.workspace = true
 
 [profile.release]
 opt-level = "z"
