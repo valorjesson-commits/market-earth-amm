@@ -1,5 +1,6 @@
 use candid::{CandidType, Deserialize, Principal};
 use ic_cdk::{query, update};
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 
 #[derive(CandidType, Deserialize, Clone)]
@@ -28,7 +29,8 @@ fn generate_pair_id(token_a: Principal, token_b: Principal) -> Principal {
         (token_b, token_a)
     };
 
-    Principal::self_authenticating(format!("pair-{}-{}", t_a, t_b).as_bytes())
+    let digest = Sha256::digest(format!("pair-{}-{}", t_a, t_b).as_bytes());
+    Principal::from_slice(&digest[..29])
 }
 
 #[ic_cdk::init]

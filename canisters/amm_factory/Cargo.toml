@@ -12,6 +12,7 @@ crate-type = ["cdylib"]
 candid.workspace = true
 ic-cdk.workspace = true
 serde.workspace = true
+sha2 = "0.10.9"
 
 [profile.release]
 opt-level = "z"
