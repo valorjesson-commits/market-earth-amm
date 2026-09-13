@@ -129,6 +129,7 @@ function updateUIConnected(provider, principalId) {
   elIiConnectBtn.setAttribute("disabled", "true");
   elNfidConnectBtn.setAttribute("disabled", "true");
   elPlugConnectBtn.setAttribute("disabled", "true");
+  elIcpswapConnectBtn.setAttribute("disabled", "true");
   elStoicConnectBtn.setAttribute("disabled", "true");
 }
 
@@ -149,6 +150,7 @@ function updateUIDisconnected() {
   elIiConnectBtn.removeAttribute("disabled");
   elNfidConnectBtn.removeAttribute("disabled");
   elPlugConnectBtn.removeAttribute("disabled");
+  elIcpswapConnectBtn.removeAttribute("disabled");
   elStoicConnectBtn.removeAttribute("disabled");
   
   connectedProvider = null;
