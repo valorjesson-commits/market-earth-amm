@@ -1,0 +1,14 @@
+# Rust
+target/
+
+# Node/Vite
+node_modules/
+frontend/dist/
+frontend/node_modules/
+
+# DFX
+.dfx/
+.env
+
+# OS files
+.DS_Store

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Market Earth AMM - Wallet Connection Center</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo-section">
+        <span class="logo-emoji">🌍</span>
+        <div class="logo-text">
+          <h1>Market Earth AMM</h1>
+          <p>Multi-Wallet Authentication & Connection Hub</p>
+        </div>
+      </div>
+      <div class="network-badge">
+        <span class="status-dot green"></span>
+        <span id="current-network">Internet Computer (Local/Mainnet)</span>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <!-- Connection Status Card -->
+      <section class="card status-card">
+        <h2>Connection Status</h2>
+        <div class="status-grid">
+          <div class="status-item">
+            <span class="status-label">Wallet Provider:</span>
+            <span id="wallet-provider-name" class="status-value highlight">Not Connected</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Principal ID:</span>
+            <span id="wallet-principal-id" class="status-value mono">-</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Account Balance:</span>
+            <span id="wallet-balance" class="status-value">0.00 ICP</span>
+          </div>
+        </div>
+        <div class="status-actions">
+          <button id="disconnect-btn" class="btn btn-danger" disabled>Disconnect Wallet</button>
+        </div>
+      </section>
+
+      <!-- Connection Methods Grid -->
+      <section class="wallet-methods-section">
+        <h2>Select Your Connection Method</h2>
+        <div class="methods-grid">
+          <!-- Internet Identity / NFID -->
+          <div class="method-card">
+            <div class="method-header">
+              <span class="method-icon">🆔</span>
+              <h3>Internet Identity & NFID</h3>
+            </div>
+            <p>Connect securely using DFINITY's native Identity Anchor or NFID with your hardware key, biometrics, or password.</p>
+            <div class="method-actions">
+              <button id="ii-connect-btn" class="btn btn-primary">Connect Internet Identity</button>
+              <button id="nfid-connect-btn" class="btn btn-secondary">Connect NFID</button>
+            </div>
+          </div>
+
+          <!-- Plug Wallet -->
+          <div class="method-card">
+            <div class="method-header">
+              <span class="method-icon">🔌</span>
+              <h3>Plug Wallet</h3>
+            </div>
+            <p>Connect using the Plug browser extension to securely sign transactions, view tokens, and manage assets.</p>
+            <div class="method-actions">
+              <button id="plug-connect-btn" class="btn btn-primary">Connect Plug Wallet</button>
+            </div>
+          </div>
+
+          <!-- Stoic Wallet -->
+          <div class="method-card">
+            <div class="method-header">
+              <span class="method-icon">💼</span>
+              <h3>Stoic Wallet</h3>
+            </div>
+            <p>Connect using Stoic Wallet, which allows you to create and manage multiple identities with ease.</p>
+            <div class="method-actions">
+              <button id="stoic-connect-btn" class="btn btn-primary">Connect Stoic Wallet</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Advanced: Canister Interactions -->
+      <section class="card advanced-card">
+        <h2>Interact with AMM Canisters</h2>
+        <p class="description">Once your wallet is connected, you can call read and write methods on the Market Earth AMM canisters directly from your browser.</p>
+        
+        <div class="form-group">
+          <label for="canister-id-input">Canister ID (e.g. AMM Factory):</label>
+          <input type="text" id="canister-id-input" placeholder="e.g. r7inp-6aaaa-aaaaa-aaaaa-cai" class="form-input">
+        </div>
+
+        <div class="action-buttons">
+          <button id="get-config-btn" class="btn btn-accent" disabled>Call get_config()</button>
+          <button id="list-pairs-btn" class="btn btn-accent" disabled>Call list_pairs()</button>
+        </div>
+
+        <div class="response-section">
+          <h3>Canister Output Log</h3>
+          <pre id="canister-log-output" class="mono">Waiting for user interaction...</pre>
+        </div>
+      </section>
+
+      <!-- Guidelines and Best Practices -->
+      <section class="card guide-card">
+        <h2>CLI and Frontend Wallet Management Guide</h2>
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="cli-guide">CLI Guide (Developers)</button>
+          <button class="tab-btn" data-tab="frontend-guide">Frontend Integration (DApps)</button>
+        </div>
+        
+        <div id="cli-guide" class="tab-content active">
+          <h3>Developer CLI Wallet Connection</h3>
+          <p>Manage your developer identity and verify balances using the `dfx` CLI directly:</p>
+          <pre class="code-block"><code># 1. View current active CLI identity
+dfx identity whoami
+
+# 2. Get active identity's principal
+dfx identity get-principal
+
+# 3. Use a custom named identity
+dfx identity use &lt;identity-name&gt;
+
+# 4. Check ledger balance on mainnet (ic) or local
+dfx ledger --network ic balance
+dfx ledger balance</code></pre>
+          <p class="tip">💡 Use the pre-configured script <code>./scripts/wallet_manager.sh</code> in this repository for automated developer CLI management!</p>
+        </div>
+
+        <div id="frontend-guide" class="tab-content">
+          <h3>How to Integrate Multi-Wallet Support in Your Frontend</h3>
+          <p>Our code includes standard adapters to request and initialize authorized canister actors. Below is the pattern to instantiate a backend actor using the authenticated identity:</p>
+          <pre class="code-block"><code>import { HttpAgent, Actor } from "@dfinity/agent";
+import { AuthClient } from "@dfinity/auth-client";
+
+// After authenticating with AuthClient:
+const identity = authClient.getIdentity();
+const agent = new HttpAgent({ identity });
+
+// Construct the canister actor
+const ammActor = Actor.createActor(idlFactory, {
+  agent,
+  canisterId,
+});</code></pre>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>&copy; 2026 Market Earth AMM. Built for the Internet Computer Protocol.</p>
+    </footer>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
