@@ -165,7 +165,7 @@ jobs:
       
       # PHASE 7: Finalization (95%)
       - name: "[90%] Upload deployment artifacts"
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: deployment-artifacts
           path: |
