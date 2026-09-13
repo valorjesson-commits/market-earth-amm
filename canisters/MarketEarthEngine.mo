@@ -1,3 +1,5 @@
+import Result "mo:base/Result";
+
 actor MarketEarthEngine {
     private var reserveMeCoin : Nat = 10_000_000_000;
     private var reserveWeCoin : Nat = 5_000_000_000;
@@ -5,7 +7,7 @@ actor MarketEarthEngine {
 
     public query func getReserves() : async (Nat, Nat) {
         return (reserveMeCoin, reserveWeCoin);
-    }
+    };
 
     public shared func executeDualSwap(amountIn : Nat, isMeToWe : Bool) : async Result.Result<Nat, Text> {
         if (amountIn == 0) { return #err("Amount must be greater than zero"); };
