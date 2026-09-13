@@ -16,8 +16,8 @@ def create_or_update_profile():
 
     try:
         profile, created = upsert_profile(data)
-    except ValueError as exc:
-        return jsonify({"error": str(exc)}), 400
+    except ValueError:
+        return jsonify({"error": "invalid profile payload"}), 400
 
     return jsonify(profile.to_dict()), 201 if created else 200
 
