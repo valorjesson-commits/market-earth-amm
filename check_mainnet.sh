@@ -8,6 +8,7 @@ if [ "$FACTORY_ID" != "Not found" ]; then
     echo "=== 5. PAIR_CANISTER ==="; PAIR_ID=$(dfx canister --network ic id pair 2>/dev/null || echo "Not found"); echo "$PAIR_ID"
     if [ "$PAIR_ID" != "Not found" ]; then
         echo "=== 6. PAIR_STATE ==="; dfx canister --network ic call pair get_reserves || true
-        echo "=== 7. PAIR_SUPPLY ==="; dfx canister --network ic call pair total_supply || true
+        echo "=== 7. PAIR_SNAPSHOT ==="; dfx canister --network ic call pair get_snapshot || true
+        echo "=== 8. PAIR_SUPPLY ==="; dfx canister --network ic call pair total_supply || true
     fi
 fi

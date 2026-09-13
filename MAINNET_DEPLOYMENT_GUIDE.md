@@ -32,11 +32,15 @@ cargo build --manifest-path canisters/pair/Cargo.toml --target wasm32-unknown-un
 # Set your governance principal
 export GOV_PRINCIPAL="f7ffu-3qaaa-aaaaa-aaaba-cai"
 
+# Deploy Pair first so the factory can wire to it
+dfx deploy --network ic pair --no-wallet --yes
+
 # Deploy AMM Factory
 dfx deploy --network ic amm_factory --argument "(record { 
   governance_principal = principal \"$GOV_PRINCIPAL\"; 
   paused = false; 
-  whitelist = vec {} 
+  whitelist = vec {}; 
+  pair_canister = principal \"$(dfx canister --network ic id pair)\"
 })"
 
 # Get factory canister ID
@@ -55,6 +59,9 @@ dfx canister --network ic call $FACTORY_ID get_config
 
 # List pairs (initially empty)
 dfx canister --network ic call $FACTORY_ID list_pairs
+
+# Check pair snapshot
+dfx canister --network ic call pair get_snapshot
 ```
 
 ## Step 5: Create First Pair
@@ -115,8 +122,9 @@ dfx canister --network ic call $FACTORY_ID set_paused "(false)"
 The GitHub Actions workflow automatically:
 1. Builds Rust canisters on each push to `main` or `amm-deploy-setup`
 2. Deploys the `pair` canister before the factory so the factory can wire it in
-2. Runs integration tests
-3. Performs E2E liquidity operations
+3. Validates the factory and pair snapshot after deployment
+4. Runs integration tests
+5. Performs E2E liquidity operations
 
 ## Troubleshooting
 

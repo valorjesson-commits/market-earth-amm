@@ -118,6 +118,7 @@ jobs:
           echo "🔍 Verifying deployment..."
           sleep 5
           dfx canister --network $NETWORK status ${{ env.FACTORY_CANISTER_ID }}
+          dfx canister --network $NETWORK call pair get_snapshot
           echo "✅ Factory status verified"
       
       # PHASE 6: Post-deployment validation (85%)
