@@ -1,28 +1,77 @@
 use candid::{CandidType, Deserialize, Principal};
 use ic_cdk::{query, update};
 use std::cell::RefCell;
+use std::collections::HashMap;
 
-#[derive(CandidType, Deserialize, Clone, Default)]
+#[derive(CandidType, Deserialize, Clone)]
 pub struct PairState {
     pub token_a: Principal,
     pub token_b: Principal,
     pub reserve_a: u128,
     pub reserve_b: u128,
     pub total_supply: u128,
-    pub balances: std::collections::HashMap<Principal, u128>,
+    pub balances: HashMap<Principal, u128>,
+    pub configured: bool,
+}
+
+impl Default for PairState {
+    fn default() -> Self {
+        Self {
+            token_a: Principal::anonymous(),
+            token_b: Principal::anonymous(),
+            reserve_a: 0,
+            reserve_b: 0,
+            total_supply: 0,
+            balances: HashMap::new(),
+            configured: false,
+        }
+    }
 }
 
 thread_local! {
     static PAIR_STATE: RefCell<PairState> = RefCell::new(PairState::default());
 }
 
+fn integer_sqrt(value: u128) -> u128 {
+    if value == 0 {
+        return 0;
+    }
+
+    let mut current = value;
+    let mut next = (current + 1) / 2;
+
+    while next < current {
+        current = next;
+        next = (current + value / current) / 2;
+    }
+
+    current
+}
+
 #[ic_cdk::init]
-fn init(token_a: Principal, token_b: Principal) {
+fn init() {}
+
+#[update]
+fn configure(token_a: Principal, token_b: Principal) -> Result<(), String> {
+    if token_a == token_b {
+        return Err("Tokens must be different".to_string());
+    }
+
     PAIR_STATE.with(|state| {
         let mut s = state.borrow_mut();
+
+        if s.configured {
+            if s.token_a == token_a && s.token_b == token_b {
+                return Ok(());
+            }
+            return Err("Pair already configured".to_string());
+        }
+
         s.token_a = token_a;
         s.token_b = token_b;
-    });
+        s.configured = true;
+        Ok(())
+    })
 }
 
 #[update]
@@ -35,10 +84,16 @@ fn add_liquidity(amount_a: u128, amount_b: u128) -> Result<u128, String> {
 
     PAIR_STATE.with(|state| {
         let mut s = state.borrow_mut();
+        if !s.configured {
+            return Err("Pair not configured".to_string());
+        }
 
         let lp_tokens = if s.total_supply == 0 {
-            (amount_a * amount_b).isqrt()
+            integer_sqrt(amount_a.saturating_mul(amount_b))
         } else {
+            if s.reserve_a == 0 || s.reserve_b == 0 {
+                return Err("Pair reserves are empty".to_string());
+            }
             let liquidity_a = (amount_a * s.total_supply) / s.reserve_a;
             let liquidity_b = (amount_b * s.total_supply) / s.reserve_b;
             std::cmp::min(liquidity_a, liquidity_b)
@@ -67,10 +122,17 @@ fn remove_liquidity(lp_amount: u128) -> Result<(u128, u128), String> {
 
     PAIR_STATE.with(|state| {
         let mut s = state.borrow_mut();
+        if !s.configured {
+            return Err("Pair not configured".to_string());
+        }
 
         let balance = s.balances.get(&caller).copied().unwrap_or(0);
         if balance < lp_amount {
             return Err("Insufficient LP tokens".to_string());
+        }
+
+        if s.total_supply == 0 {
+            return Err("No liquidity available".to_string());
         }
 
         let amount_a = (lp_amount * s.reserve_a) / s.total_supply;
@@ -93,6 +155,9 @@ fn swap(token_in: Principal, amount_in: u128, min_amount_out: u128) -> Result<u1
 
     PAIR_STATE.with(|state| {
         let mut s = state.borrow_mut();
+        if !s.configured {
+            return Err("Pair not configured".to_string());
+        }
 
         let (reserve_in, reserve_out) = if token_in == s.token_a {
             (s.reserve_a, s.reserve_b)
@@ -101,6 +166,10 @@ fn swap(token_in: Principal, amount_in: u128, min_amount_out: u128) -> Result<u1
         } else {
             return Err("Invalid token".to_string());
         };
+
+        if reserve_in == 0 || reserve_out == 0 {
+            return Err("Insufficient liquidity".to_string());
+        }
 
         // Uniswap V2 constant product formula: x * y = k
         let amount_out = (amount_in * reserve_out) / (reserve_in + amount_in);
@@ -143,3 +212,5 @@ fn total_supply() -> u128 {
 }
 
 ic_cdk::export_candid!();
+
+fn main() {}

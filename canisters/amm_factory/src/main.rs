@@ -1,5 +1,5 @@
 use candid::{CandidType, Deserialize, Principal};
-use ic_cdk::storage;
+use ic_cdk::api::call::call;
 use ic_cdk::{query, update};
 use std::collections::HashMap;
 
@@ -8,6 +8,7 @@ pub struct FactoryConfig {
     pub governance_principal: Principal,
     pub paused: bool,
     pub whitelist: Vec<Principal>,
+    pub pair_canister: Principal,
 }
 
 thread_local! {
@@ -16,6 +17,7 @@ thread_local! {
             governance_principal: Principal::anonymous(),
             paused: false,
             whitelist: vec![],
+            pair_canister: Principal::anonymous(),
         }
     );
     static PAIRS: std::cell::RefCell<HashMap<(Principal, Principal), Principal>> = std::cell::RefCell::new(HashMap::new());
@@ -28,14 +30,17 @@ fn init(config: FactoryConfig) {
 }
 
 #[update]
-fn create_pair(token_a: Principal, token_b: Principal) -> Result<Principal, String> {
-    FACTORY_CONFIG.with(|config| {
-        let cfg = config.borrow();
-        if cfg.paused {
-            return Err("Factory is paused".to_string());
-        }
-        Ok(())
-    })?;
+async fn create_pair(token_a: Principal, token_b: Principal) -> Result<Principal, String> {
+    let cfg = FACTORY_CONFIG.with(|config| config.borrow().clone());
+
+    if cfg.paused {
+        return Err("Factory is paused".to_string());
+    }
+
+    let caller = ic_cdk::api::caller();
+    if caller != cfg.governance_principal && !cfg.whitelist.contains(&caller) {
+        return Err("Unauthorized".to_string());
+    }
 
     let (t_a, t_b) = if token_a < token_b {
         (token_a, token_b)
@@ -43,19 +48,19 @@ fn create_pair(token_a: Principal, token_b: Principal) -> Result<Principal, Stri
         (token_b, token_a)
     };
 
-    PAIRS.with(|pairs| {
-        let mut p = pairs.borrow_mut();
-        if p.contains_key(&(t_a, t_b)) {
-            return Err("Pair already exists".to_string());
-        }
-        Ok(())
-    })?;
+    if let Some(existing) = PAIRS.with(|pairs| pairs.borrow().get(&(t_a, t_b)).cloned()) {
+        return Ok(existing);
+    }
 
-    // Generate deterministic pair canister ID (simplified)
-    let pair_id = Principal::from_slice(&ic_cdk::api::crypto::sha256(
-        format!("pair-{}-{}", t_a, t_b).as_bytes(),
-    )[0..29]);
+    let (configure_result,): (Result<(), String>,) =
+        call(cfg.pair_canister, "configure", (t_a, t_b))
+            .await
+            .map_err(|(code, message)| {
+                format!("Failed to configure pair canister ({code:?}): {message}")
+            })?;
+    configure_result?;
 
+    let pair_id = cfg.pair_canister;
     PAIRS.with(|pairs| {
         pairs.borrow_mut().insert((t_a, t_b), pair_id);
     });
@@ -102,3 +107,5 @@ fn set_paused(paused: bool) -> Result<(), String> {
 }
 
 ic_cdk::export_candid!();
+
+fn main() {}

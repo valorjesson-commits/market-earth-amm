@@ -114,6 +114,7 @@ dfx canister --network ic call $FACTORY_ID set_paused "(false)"
 
 The GitHub Actions workflow automatically:
 1. Builds Rust canisters on each push to `main` or `amm-deploy-setup`
+2. Deploys the `pair` canister before the factory so the factory can wire it in
 2. Runs integration tests
 3. Performs E2E liquidity operations
 

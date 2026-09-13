@@ -88,7 +88,13 @@ jobs:
           echo "🔐 Setting up dfx identity..."
           dfx identity use default || dfx identity create default
           echo "✅ Identity configured"
-      
+
+      - name: "[58%] Deploy Pair canister"
+        run: |
+          echo "🚀 Deploying Pair canister..."
+          dfx deploy --network ${{ github.event.inputs.network }} pair --no-wallet --yes
+          echo "✅ Pair deployed: $(dfx canister --network ${{ github.event.inputs.network }} id pair)"
+       
       - name: "[60%] Deploy Canisters"
         env:
           GOV_PRINCIPAL: ${{ env.GOV_PRINCIPAL }}
@@ -98,7 +104,8 @@ jobs:
           dfx deploy --network $NETWORK amm_factory --no-wallet --yes --argument "(record {
             governance_principal = principal \"$GOV_PRINCIPAL\";
             paused = false;
-            whitelist = vec {}
+            whitelist = vec {};
+            pair_canister = principal \"$(dfx canister --network $NETWORK id pair)\"
           })"
           FACTORY_ID=$(dfx canister --network $NETWORK id amm_factory)
           echo "FACTORY_CANISTER_ID=$FACTORY_ID" >> $GITHUB_ENV

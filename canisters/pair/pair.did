@@ -1,0 +1,9 @@
+service : {
+  configure : (principal, principal) -> (variant { Ok : null; Err : text });
+  add_liquidity : (nat, nat) -> (variant { Ok : nat; Err : text });
+  remove_liquidity : (nat) -> (variant { Ok : record { nat; nat }; Err : text });
+  swap : (principal, nat, nat) -> (variant { Ok : nat; Err : text });
+  get_reserves : () -> (record { nat; nat }) query;
+  get_balance : (principal) -> (nat) query;
+  total_supply : () -> (nat) query;
+}

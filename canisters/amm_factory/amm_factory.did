@@ -1,0 +1,14 @@
+type FactoryConfig = record {
+  governance_principal : principal;
+  paused : bool;
+  whitelist : vec principal;
+  pair_canister : principal;
+};
+
+service : {
+  create_pair : (principal, principal) -> (variant { Ok : principal; Err : text });
+  get_config : () -> (FactoryConfig) query;
+  get_pair : (principal, principal) -> (opt principal) query;
+  list_pairs : () -> (vec record { principal; principal; principal }) query;
+  set_paused : (bool) -> (variant { Ok : null; Err : text });
+}
