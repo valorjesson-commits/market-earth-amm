@@ -126,10 +126,12 @@ mod tests {
     }
 
     #[test]
-    fn save_candid() {
-        let candid = __export_service();
+    fn candid_interface_matches_checked_in_did() {
+        let generated_candid = __export_service();
         let did_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("amm_factory.did");
+        let checked_in_candid =
+            std::fs::read_to_string(&did_path).expect("failed to read checked-in amm_factory.did");
 
-        std::fs::write(did_path, candid).unwrap();
+        assert_eq!(generated_candid, checked_in_candid, "amm_factory.did is out of date");
     }
 }
