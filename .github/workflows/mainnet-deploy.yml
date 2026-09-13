@@ -95,7 +95,7 @@ jobs:
           NETWORK: ${{ github.event.inputs.network }}
         run: |
           echo "🚀 Deploying AMM Factory to $NETWORK..."
-          dfx deploy --network $NETWORK amm_factory --no-wallet --argument "(record { 
+          dfx deploy --network $NETWORK amm_factory --no-wallet -y --argument "(record { 
             governance_principal = principal \"$GOV_PRINCIPAL\"; 
             paused = false; 
             whitelist = vec {} 

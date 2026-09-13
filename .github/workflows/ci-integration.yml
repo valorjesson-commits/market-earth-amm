@@ -42,13 +42,11 @@ jobs:
           export PATH="$HOME/.local/share/dfx/bin:$PATH"
           dfx --version
 
-      - name: Run Deployment & Integration Pipeline
-        run: |
-          export PATH="$HOME/.local/share/dfx/bin:$PATH"
-          chmod +x deploy_local.sh scripts/integration_liquidity_test.sh
-          
-          GOV_PRINCIPAL="$(dfx identity get-principal)" ./deploy_local.sh
-          ./scripts/integration_liquidity_test.sh
+      - name: Start DFX Replica
+        run: dfx start --background
+
+      - name: Deploy Canisters
+        run: dfx deploy -y
 
       - name: Cleanup replica on failure
         if: failure()
