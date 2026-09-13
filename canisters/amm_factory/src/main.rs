@@ -123,4 +123,10 @@ mod tests {
 
         assert_eq!(generate_pair_id(token_a, token_b), generate_pair_id(token_b, token_a));
     }
+
+    #[test]
+    fn save_candid() {
+        let candid = __export_service();
+        std::fs::write("amm_factory.did", candid).expect("Failed to write candid to file");
+    }
 }

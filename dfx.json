@@ -8,6 +8,14 @@
     "MarketEarthEngine": {
       "type": "motoko",
       "main": "canisters/MarketEarthEngine.mo"
+    },
+    "token_a": {
+      "type": "motoko",
+      "main": "canisters/MarketEarthEngine.mo"
+    },
+    "token_b": {
+      "type": "motoko",
+      "main": "canisters/MarketEarthEngine.mo"
     }
   },
   "version": 1
