@@ -24,9 +24,9 @@ dfx build
 
 # Deploy canisters
 echo "Deploying canisters..."
-dfx canister install amm_factory --mode reinstall
-dfx canister install token_a --mode reinstall
-dfx canister install token_b --mode reinstall
+dfx canister install amm_factory --mode reinstall --argument "(record { governance_principal = principal \"$GOV_PRINCIPAL\"; paused = false; whitelist = vec {} })" -y
+dfx canister install token_a --mode reinstall -y
+dfx canister install token_b --mode reinstall -y
 
 # Get canister IDs
 echo ""
