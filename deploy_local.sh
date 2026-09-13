@@ -24,16 +24,12 @@ dfx build
 
 # Deploy canisters
 echo "Deploying canisters..."
-dfx canister install amm_factory --mode reinstall
-dfx canister install token_a --mode reinstall
-dfx canister install token_b --mode reinstall
+dfx canister install amm_factory --mode reinstall --argument "(record { governance_principal = principal \"$GOV_PRINCIPAL\"; paused = false; whitelist = vec {} })"
 
 # Get canister IDs
 echo ""
 echo "=== Deployment Complete ==="
 echo "AMM Factory: $(dfx canister id amm_factory)"
-echo "Token A: $(dfx canister id token_a)"
-echo "Token B: $(dfx canister id token_b)"
 
 echo ""
 echo "Local deployment finished successfully!"
