@@ -100,7 +100,10 @@ if (isConnected) {
 }
 ```
 
-### C. Stoic Wallet
+### C. ICPSwap Wallet
+ICPSwap wallet flows can use the same injected-wallet pattern as Plug-compatible Internet Computer wallets. The frontend now exposes a dedicated ICPSwap connect button that prefers `window.ic.icpswap` when available and falls back to the Plug-compatible API.
+
+### D. Stoic Wallet
 Stoic Wallet is another popular ICP wallet that can be connected via web flow using `@stoicwallet/identity`.
 
 ---

@@ -11,6 +11,7 @@ const elDisconnectBtn = document.getElementById("disconnect-btn");
 const elIiConnectBtn = document.getElementById("ii-connect-btn");
 const elNfidConnectBtn = document.getElementById("nfid-connect-btn");
 const elPlugConnectBtn = document.getElementById("plug-connect-btn");
+const elIcpswapConnectBtn = document.getElementById("icpswap-connect-btn");
 const elStoicConnectBtn = document.getElementById("stoic-connect-btn");
 
 const elCanisterIdInput = document.getElementById("canister-id-input");
@@ -23,6 +24,45 @@ let authClient = null;
 let currentIdentity = null;
 let currentAgent = null;
 let connectedProvider = null;
+
+function getIcHost() {
+  const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+  return isLocal ? "http://127.0.0.1:4943" : "https://ic0.app";
+}
+
+function getInjectedWalletClient(preferredKey) {
+  return window.ic && window.ic[preferredKey] ? window.ic[preferredKey] : null;
+}
+
+async function connectInjectedWallet({ providerName, walletClient, whitelist = [] }) {
+  const host = getIcHost();
+
+  if (!walletClient) {
+    logOutput(`${providerName} wallet not detected. Please install a compatible wallet to connect.`);
+    return;
+  }
+
+  const requestOptions = { whitelist, host };
+  const isConnected = await walletClient.requestConnect(requestOptions);
+
+  if (!isConnected) {
+    logOutput(`${providerName} connection rejected by user.`);
+    return;
+  }
+
+  if (typeof walletClient.createAgent === "function") {
+    await walletClient.createAgent(requestOptions);
+  }
+
+  const principal = await walletClient.getPrincipal();
+  currentAgent = walletClient.agent ?? new HttpAgent({ host });
+  if (host.includes("127.0.0.1") && currentAgent && typeof currentAgent.fetchRootKey === "function") {
+    await currentAgent.fetchRootKey();
+  }
+  connectedProvider = providerName;
+  updateUIConnected(providerName, principal.toString());
+  logOutput(`Connected via ${providerName} successfully!`);
+}
 
 // Initialize AuthClient
 async function initAuth() {
@@ -89,6 +129,7 @@ function updateUIConnected(provider, principalId) {
   elIiConnectBtn.setAttribute("disabled", "true");
   elNfidConnectBtn.setAttribute("disabled", "true");
   elPlugConnectBtn.setAttribute("disabled", "true");
+  elIcpswapConnectBtn.setAttribute("disabled", "true");
   elStoicConnectBtn.setAttribute("disabled", "true");
 }
 
@@ -109,6 +150,7 @@ function updateUIDisconnected() {
   elIiConnectBtn.removeAttribute("disabled");
   elNfidConnectBtn.removeAttribute("disabled");
   elPlugConnectBtn.removeAttribute("disabled");
+  elIcpswapConnectBtn.removeAttribute("disabled");
   elStoicConnectBtn.removeAttribute("disabled");
   
   connectedProvider = null;
@@ -157,32 +199,30 @@ async function connectNFID() {
 // 3. Connect Plug Wallet
 async function connectPlug() {
   logOutput("Connecting with Plug Wallet...");
-  if (!window.ic || !window.ic.plug) {
-    logOutput("Plug Wallet extension not detected. Please install it to connect.");
-    window.open("https://plugwallet.ooo/", "_blank");
-    return;
-  }
-  
   try {
-    const isConnected = await window.ic.plug.requestConnect({
-      whitelist: [], // list target canister IDs if known
-      host: window.location.hostname === "localhost" ? "http://127.0.0.1:4943" : "https://ic0.app"
+    await connectInjectedWallet({
+      providerName: "Plug Wallet",
+      walletClient: getInjectedWalletClient("plug"),
     });
-    
-    if (isConnected) {
-      const principal = await window.ic.plug.getPrincipal();
-      connectedProvider = "Plug Wallet";
-      updateUIConnected("Plug Wallet", principal.toString());
-      logOutput("Connected via Plug Wallet successfully!");
-    } else {
-      logOutput("Plug Connection rejected by user.");
-    }
   } catch (error) {
     logOutput(`Plug Wallet connection error: ${error.message}`);
   }
 }
 
-// 4. Connect Stoic Wallet
+// 4. Connect ICPSwap Wallet
+async function connectICPSwap() {
+  logOutput("Connecting with ICPSwap Wallet...");
+  try {
+    await connectInjectedWallet({
+      providerName: "ICPSwap Wallet",
+      walletClient: getInjectedWalletClient("icpswap") ?? getInjectedWalletClient("plug"),
+    });
+  } catch (error) {
+    logOutput(`ICPSwap Wallet connection error: ${error.message}`);
+  }
+}
+
+// 5. Connect Stoic Wallet
 async function connectStoic() {
   logOutput("Connecting with Stoic Wallet...");
   try {
@@ -276,6 +316,7 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
 elIiConnectBtn.addEventListener("click", connectInternetIdentity);
 elNfidConnectBtn.addEventListener("click", connectNFID);
 elPlugConnectBtn.addEventListener("click", connectPlug);
+elIcpswapConnectBtn.addEventListener("click", connectICPSwap);
 elStoicConnectBtn.addEventListener("click", connectStoic);
 elDisconnectBtn.addEventListener("click", disconnect);
 
