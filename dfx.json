@@ -4,6 +4,10 @@
       "type": "rust",
       "package": "amm_factory",
       "candid": "canisters/amm_factory/amm_factory.did"
+    },
+    "MarketEarthEngine": {
+      "type": "motoko",
+      "main": "canisters/MarketEarthEngine.mo"
     }
   },
   "version": 1
