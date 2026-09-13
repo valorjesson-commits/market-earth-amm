@@ -123,4 +123,15 @@ mod tests {
 
         assert_eq!(generate_pair_id(token_a, token_b), generate_pair_id(token_b, token_a));
     }
+
+    #[test]
+    fn save_candid() {
+        use std::env;
+        use std::fs::write;
+        use std::path::PathBuf;
+
+        let dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
+        let candid = __export_service();
+        write(dir.join("amm_factory.did"), candid).expect("Write candid failed");
+    }
 }
