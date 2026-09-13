@@ -13,8 +13,12 @@ echo "Testing against canister: $AMM_CANISTER"
 # Test 1: Check canister is responsive
 echo ""
 echo "Test 1: Checking canister health..."
-dfx canister call "$AMM_CANISTER" get_config >/dev/null
-echo "✓ Canister is responsive"
+if dfx canister call "$AMM_CANISTER" get_config >/dev/null; then
+  echo "✓ Canister is responsive"
+else
+  echo "✗ Canister health check failed"
+  exit 1
+fi
 
 # Test 2: Liquidity pool operations
 echo ""
