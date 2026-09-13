@@ -1,0 +1,14 @@
+# Python virtual environment
+venv/
+__pycache__/
+*.pyc
+
+# Local databases and instances
+instance/
+*.db
+
+# DFX / Internet Computer local build outputs
+.dfx/
+
+# Rust build outputs
+target/
