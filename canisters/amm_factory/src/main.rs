@@ -34,7 +34,12 @@ fn generate_pair_id(token_a: Principal, token_b: Principal) -> Principal {
 }
 
 #[ic_cdk::init]
-fn init(config: FactoryConfig) {
+fn init(config_opt: Option<FactoryConfig>) {
+    let config = config_opt.unwrap_or(FactoryConfig {
+        governance_principal: Principal::anonymous(),
+        paused: false,
+        whitelist: vec![],
+    });
     FACTORY_CONFIG.with(|c| *c.borrow_mut() = config);
 }
 
@@ -122,5 +127,16 @@ mod tests {
         let token_b = Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap();
 
         assert_eq!(generate_pair_id(token_a, token_b), generate_pair_id(token_b, token_a));
+    }
+
+    #[test]
+    fn save_candid() {
+        use std::env;
+        use std::path::PathBuf;
+        use std::fs::write;
+
+        let dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
+        let candid = __export_service();
+        write(dir.join("amm_factory.did"), candid).expect("Write failed");
     }
 }
