@@ -63,6 +63,10 @@ fn init() {}
 
 #[update]
 fn configure(token_a: Principal, token_b: Principal) -> Result<(), String> {
+    configure_pair(token_a, token_b)
+}
+
+fn configure_pair(token_a: Principal, token_b: Principal) -> Result<(), String> {
     if token_a == token_b {
         return Err("Tokens must be different".to_string());
     }
@@ -86,11 +90,13 @@ fn configure(token_a: Principal, token_b: Principal) -> Result<(), String> {
 
 #[update]
 fn add_liquidity(amount_a: u128, amount_b: u128) -> Result<u128, String> {
+    add_liquidity_for(ic_cdk::api::caller(), amount_a, amount_b)
+}
+
+fn add_liquidity_for(caller: Principal, amount_a: u128, amount_b: u128) -> Result<u128, String> {
     if amount_a == 0 || amount_b == 0 {
         return Err("Amounts must be greater than zero".to_string());
     }
-
-    let caller = ic_cdk::api::caller();
 
     PAIR_STATE.with(|state| {
         let mut s = state.borrow_mut();
@@ -124,11 +130,13 @@ fn add_liquidity(amount_a: u128, amount_b: u128) -> Result<u128, String> {
 
 #[update]
 fn remove_liquidity(lp_amount: u128) -> Result<(u128, u128), String> {
+    remove_liquidity_for(ic_cdk::api::caller(), lp_amount)
+}
+
+fn remove_liquidity_for(caller: Principal, lp_amount: u128) -> Result<(u128, u128), String> {
     if lp_amount == 0 {
         return Err("LP amount must be greater than zero".to_string());
     }
-
-    let caller = ic_cdk::api::caller();
 
     PAIR_STATE.with(|state| {
         let mut s = state.borrow_mut();
@@ -159,6 +167,10 @@ fn remove_liquidity(lp_amount: u128) -> Result<(u128, u128), String> {
 
 #[update]
 fn swap(token_in: Principal, amount_in: u128, min_amount_out: u128) -> Result<u128, String> {
+    swap_for(token_in, amount_in, min_amount_out)
+}
+
+fn swap_for(token_in: Principal, amount_in: u128, min_amount_out: u128) -> Result<u128, String> {
     if amount_in == 0 {
         return Err("Amount in must be greater than zero".to_string());
     }
@@ -239,3 +251,50 @@ fn total_supply() -> u128 {
 ic_cdk::export_candid!();
 
 fn main() {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn reset_state() {
+        PAIR_STATE.with(|state| {
+            *state.borrow_mut() = PairState::default();
+        });
+    }
+
+    #[test]
+    fn integer_sqrt_handles_basic_values() {
+        assert_eq!(integer_sqrt(0), 0);
+        assert_eq!(integer_sqrt(1), 1);
+        assert_eq!(integer_sqrt(4), 2);
+        assert_eq!(integer_sqrt(15), 3);
+        assert_eq!(integer_sqrt(16), 4);
+    }
+
+    #[test]
+    fn lifecycle_flow_updates_snapshot_and_balances() {
+        reset_state();
+
+        let token_a = Principal::from_slice(&[1]);
+        let token_b = Principal::from_slice(&[2]);
+        let caller = Principal::from_slice(&[3]);
+
+        configure_pair(token_a, token_b).expect("configure");
+        assert!(get_snapshot().configured);
+
+        let minted = add_liquidity_for(caller, 1_000, 1_000).expect("mint lp");
+        assert_eq!(minted, 1_000);
+        assert_eq!(get_reserves(), (1_000, 1_000));
+        assert_eq!(total_supply(), 1_000);
+        assert_eq!(get_balance(caller), 1_000);
+
+        let amount_out = swap_for(token_a, 100, 1).expect("swap");
+        assert!(amount_out > 0);
+        assert_eq!(get_reserves().0, 1_100);
+
+        let removed = remove_liquidity_for(caller, 100).expect("remove");
+        assert!(removed.0 > 0);
+        assert!(removed.1 > 0);
+        assert_eq!(get_balance(caller), 900);
+    }
+}
