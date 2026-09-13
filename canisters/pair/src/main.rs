@@ -14,6 +14,16 @@ pub struct PairState {
     pub configured: bool,
 }
 
+#[derive(CandidType, Deserialize, Clone)]
+pub struct PairSnapshot {
+    pub token_a: Principal,
+    pub token_b: Principal,
+    pub reserve_a: u128,
+    pub reserve_b: u128,
+    pub total_supply: u128,
+    pub configured: bool,
+}
+
 impl Default for PairState {
     fn default() -> Self {
         Self {
@@ -195,6 +205,21 @@ fn get_reserves() -> (u128, u128) {
     PAIR_STATE.with(|state| {
         let s = state.borrow();
         (s.reserve_a, s.reserve_b)
+    })
+}
+
+#[query]
+fn get_snapshot() -> PairSnapshot {
+    PAIR_STATE.with(|state| {
+        let s = state.borrow();
+        PairSnapshot {
+            token_a: s.token_a,
+            token_b: s.token_b,
+            reserve_a: s.reserve_a,
+            reserve_b: s.reserve_b,
+            total_supply: s.total_supply,
+            configured: s.configured,
+        }
     })
 }
 

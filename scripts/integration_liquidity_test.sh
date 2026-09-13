@@ -5,8 +5,11 @@ export PATH="$HOME/.local/share/dfx/bin:$PATH"
 
 echo "=== Market Earth AMM Integration & Liquidity Tests ==="
 
-# Get the pair canister ID
-PAIR_CANISTER=$(dfx canister id pair 2>/dev/null || echo "pair")
+PAIR_CANISTER=$(dfx canister id pair 2>/dev/null || true)
+if [ -z "$PAIR_CANISTER" ]; then
+  echo "✗ Pair canister not deployed"
+  exit 1
+fi
 
 echo "Testing against canister: $PAIR_CANISTER"
 
@@ -14,6 +17,18 @@ echo "Testing against canister: $PAIR_CANISTER"
 echo ""
 echo "Test 1: Checking canister health..."
 dfx canister call "$PAIR_CANISTER" get_reserves 2>/dev/null || echo "✓ Canister is responsive"
+
+# Discover configured tokens from live canister state.
+PAIR_SNAPSHOT="$(dfx canister call "$PAIR_CANISTER" get_snapshot)"
+TOKEN_A_PRINCIPAL="$(SNAPSHOT="$PAIR_SNAPSHOT" python - <<'PY'
+import os, re
+snapshot = os.environ["SNAPSHOT"]
+match = re.search(r'token_a = principal "([^"]+)"', snapshot)
+if not match:
+    raise SystemExit("unable to parse token_a principal")
+print(match.group(1))
+PY
+)"
 
 # Test 2: Liquidity pool operations
 echo ""
@@ -25,7 +40,7 @@ echo "✓ Liquidity pool test passed"
 # Test 3: Swap operations
 echo ""
 echo "Test 3: Testing swap functionality..."
-dfx canister call "$PAIR_CANISTER" swap "(principal \"2vxsx-fae\", 10 : nat, 1 : nat)" >/dev/null || true
+dfx canister call "$PAIR_CANISTER" swap "(principal \"$TOKEN_A_PRINCIPAL\", 10 : nat, 1 : nat)" >/dev/null || true
 echo "✓ Swap test passed"
 
 # Test 4: Integration check
