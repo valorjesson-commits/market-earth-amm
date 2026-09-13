@@ -53,6 +53,8 @@ After deployment, check the workflow run for:
 - ✅ `checksums.txt` - WASM binary checksums for verification
 - ✅ `Deployment Summary` - Quick reference in workflow output
 
+The local deployment script also configures the singleton `pair` canister and creates an initial pair with `TOKEN_A_PRINCIPAL` and `TOKEN_B_PRINCIPAL` defaults.
+
 ## Verification
 
 Once deployment completes, verify your canister:

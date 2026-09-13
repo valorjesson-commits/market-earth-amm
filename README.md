@@ -22,6 +22,8 @@ GOV_PRINCIPAL="$(dfx identity get-principal)" ./deploy_local.sh
 - **pair**: Liquidity pool canister handling swaps and liquidity provision
 - **CI/CD Pipeline**: Automated testing on push and pull requests
 
+Local deployment installs both canisters, wires the factory to the pair canister, and seeds an initial pair using the `TOKEN_A_PRINCIPAL` and `TOKEN_B_PRINCIPAL` environment variables.
+
 ## Mainnet Deployment
 
 See [docs/production_deploy.md](docs/production_deploy.md) for production deployment checklist.

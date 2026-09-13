@@ -4,6 +4,11 @@
       "type": "rust",
       "package": "amm_factory",
       "candid": "canisters/amm_factory/amm_factory.did"
+    },
+    "pair": {
+      "type": "rust",
+      "package": "pair",
+      "candid": "canisters/pair/pair.did"
     }
   },
   "version": 1
