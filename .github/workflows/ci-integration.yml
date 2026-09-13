@@ -46,7 +46,7 @@ jobs:
         run: dfx start --background
 
       - name: Deploy Canisters
-        run: dfx deploy
+        run: dfx deploy -y
 
       - name: Cleanup replica on failure
         if: failure()
