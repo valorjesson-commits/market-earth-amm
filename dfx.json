@@ -4,6 +4,12 @@
       "type": "rust",
       "package": "amm_factory",
       "candid": "canisters/amm_factory/amm_factory.did"
+    },
+    "frontend": {
+      "type": "assets",
+      "source": [
+        "frontend/dist"
+      ]
     }
   },
   "version": 1
