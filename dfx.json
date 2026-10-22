@@ -10,6 +10,10 @@
       "source": [
         "frontend/dist"
       ]
+    },
+    "MarketEarthEngine": {
+      "type": "motoko",
+      "main": "canisters/MarketEarthEngine.mo"
     }
   },
   "version": 1

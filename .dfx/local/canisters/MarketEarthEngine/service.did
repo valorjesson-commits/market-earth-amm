@@ -1,0 +1,9 @@
+type Result = 
+ variant {
+   err: text;
+   ok: nat;
+ };
+service : {
+  executeDualSwap: (nat, bool) -> (Result);
+  getReserves: () -> (nat, nat) query;
+}

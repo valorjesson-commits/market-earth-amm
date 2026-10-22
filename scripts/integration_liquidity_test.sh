@@ -6,14 +6,19 @@ export PATH="$HOME/.local/share/dfx/bin:$PATH"
 echo "=== Market Earth AMM Integration & Liquidity Tests ==="
 
 # Get the AMM canister ID
-AMM_CANISTER=$(dfx canister id amm 2>/dev/null || echo "amm")
+AMM_CANISTER=$(dfx canister id amm_factory 2>/dev/null || echo "amm_factory")
 
 echo "Testing against canister: $AMM_CANISTER"
 
 # Test 1: Check canister is responsive
 echo ""
 echo "Test 1: Checking canister health..."
-dfx canister call $AMM_CANISTER get_stats 2>/dev/null || echo "✓ Canister is responsive"
+if dfx canister call "$AMM_CANISTER" get_config >/dev/null; then
+  echo "✓ Canister is responsive"
+else
+  echo "✗ Canister health check failed"
+  exit 1
+fi
 
 # Test 2: Liquidity pool operations
 echo ""
