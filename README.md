@@ -25,3 +25,10 @@ GOV_PRINCIPAL="$(dfx identity get-principal)" ./deploy_local.sh
 ## Mainnet Deployment
 
 See [docs/production_deploy.md](docs/production_deploy.md) for production deployment checklist.
+
+## App Loop
+
+Continue the circular app flow:
+
+- **Previous**: [um-hn](https://kolinko.github.io/um-hn/)
+- **Next**: [marketearth.io](https://marketearth.io/)
