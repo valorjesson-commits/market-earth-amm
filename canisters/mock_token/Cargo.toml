@@ -1,0 +1,14 @@
+[package]
+name = "mock_token"
+autobins = false
+version.workspace = true
+edition.workspace = true
+
+[lib]
+path = "src/main.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+candid.workspace = true
+ic-cdk.workspace = true
+serde.workspace = true
