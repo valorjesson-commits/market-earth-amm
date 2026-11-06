@@ -47,3 +47,10 @@ create_pair(token_a : principal, token_b : principal, pair_canister : principal)
 ## Deployment
 
 See [docs/production_deploy.md](docs/production_deploy.md) for the updated production checklist.
+
+## App Loop
+
+Continue the circular app flow:
+
+- **Previous**: [um-hn](https://kolinko.github.io/um-hn/)
+- **Next**: [marketearth.io](https://marketearth.io/)
