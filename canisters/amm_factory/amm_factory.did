@@ -3,12 +3,19 @@ type FactoryConfig = record {
   governance_principal : principal;
   paused : bool;
 };
+type PairRecord = record {
+  token_a : principal;
+  token_b : principal;
+  pair_canister : principal;
+};
 type Result = variant { Ok : principal; Err : text };
 type Result_1 = variant { Ok; Err : text };
 service : (FactoryConfig) -> {
-  create_pair : (principal, principal) -> (Result);
+  create_pair : (principal, principal, principal) -> (Result);
   get_config : () -> (FactoryConfig) query;
   get_pair : (principal, principal) -> (opt principal) query;
-  list_pairs : () -> (vec record { principal; principal; principal }) query;
+  list_pairs : () -> (vec PairRecord) query;
+  remove_pair : (principal, principal) -> (Result_1);
   set_paused : (bool) -> (Result_1);
+  set_whitelist : (vec principal) -> (Result_1);
 }

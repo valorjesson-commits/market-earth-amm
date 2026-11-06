@@ -1,0 +1,20 @@
+type PairInfo = record {
+  token_a : principal;
+  token_b : principal;
+  reserve_a : nat;
+  reserve_b : nat;
+  fee_basis_points : nat16;
+  total_supply : nat;
+};
+type Result = variant { Ok : nat; Err : text };
+type Result_1 = variant { Ok : record { nat; nat }; Err : text };
+service : (principal, principal) -> {
+  add_liquidity : (nat, nat) -> (Result);
+  get_balance : (principal) -> (nat) query;
+  get_pair_info : () -> (PairInfo) query;
+  get_reserves : () -> (nat, nat) query;
+  quote_swap : (principal, nat) -> (Result) query;
+  remove_liquidity : (nat) -> (Result_1);
+  swap : (principal, nat, nat) -> (Result);
+  total_supply : () -> (nat) query;
+}

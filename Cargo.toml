@@ -1,7 +1,8 @@
 [workspace]
 members = [
     "canisters/amm_factory",
-    "canisters/pair"
+    "canisters/pair",
+    "canisters/mock_token"
 ]
 resolver = "2"
 
@@ -14,3 +15,7 @@ candid = "0.10.35"
 ic-cdk = "0.13.1"
 ic-cdk-timers = "0.7.0"
 serde = { version = "1.0", features = ["derive"] }
+
+[profile.release]
+opt-level = "z"
+lto = true
